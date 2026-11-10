@@ -1,0 +1,29 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "Group Trip Planner API",
+    "description": "Plan trips with a group: propose and vote on activities, lock an itinerary, and split shared expenses. Sign in at /auth/google before using protected routes.",
+    "version": "1.0.0"
+  },
+  "schemes": ["http", "https"],
+  "consumes": ["application/json"],
+  "produces": ["application/json"],
+  "tags": [
+    { "name": "Auth", "description": "Google sign-in and logout" },
+    { "name": "Users", "description": "User accounts" },
+    { "name": "Trips", "description": "Trips, members, and itinerary" },
+    { "name": "Activities", "description": "Activity proposals and voting" },
+    { "name": "Expenses", "description": "Shared expenses and settle-up" }
+  ],
+  "paths": {
+    "/": {
+      "get": {
+        "summary": "API welcome message",
+        "responses": {
+          "200": { "description": "OK" }
+        }
+      }
+    }
+  },
+  "definitions": {}
+}
