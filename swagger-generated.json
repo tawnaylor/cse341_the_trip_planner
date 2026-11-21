@@ -1,0 +1,480 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "Group Trip Planner API",
+    "version": "1.0.0",
+    "description": "Activities CRUD for group trips. Protected routes require a signed-in session. Authentication integration is still pending; Activities return 401 until a valid session is available."
+  },
+  "basePath": "/",
+  "tags": [
+    {
+      "name": "Activities",
+      "description": "Create, view, update, and delete trip activities."
+    }
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/": {
+      "get": {
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/trips/{tripId}/activities": {
+      "get": {
+        "tags": [
+          "Activities"
+        ],
+        "summary": "List activities for a trip",
+        "description": "",
+        "parameters": [
+          {
+            "name": "tripId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "pattern": "^[a-fA-F0-9]{24}$"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Activities returned",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Activity"
+              },
+              "xml": {
+                "name": "main"
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request, activity date outside the trip dates, or trip not open for planning.",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "401": {
+            "description": "Sign in is required.",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "403": {
+            "description": "Not a trip member, or not permitted to change this activity.",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "Trip or activity not found.",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "500": {
+            "description": "An unexpected server or database error occurred.",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Activities"
+        ],
+        "summary": "Suggest an activity for a trip",
+        "description": "",
+        "parameters": [
+          {
+            "name": "tripId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "pattern": "^[a-fA-F0-9]{24}$"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/ActivityInput"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Activity created.",
+            "schema": {
+              "$ref": "#/definitions/Activity"
+            }
+          },
+          "400": {
+            "description": "Invalid request, activity date outside the trip dates, or trip not open for planning.",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "401": {
+            "description": "Sign in is required.",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "403": {
+            "description": "Not a trip member, or not permitted to change this activity.",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "Trip or activity not found.",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "500": {
+            "description": "An unexpected server or database error occurred.",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
+    "/trips/{tripId}/activities/{activityId}": {
+      "get": {
+        "tags": [
+          "Activities"
+        ],
+        "summary": "Get one activity in a trip",
+        "description": "",
+        "parameters": [
+          {
+            "name": "tripId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "pattern": "^[a-fA-F0-9]{24}$"
+          },
+          {
+            "name": "activityId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "pattern": "^[a-fA-F0-9]{24}$"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Activity returned.",
+            "schema": {
+              "$ref": "#/definitions/Activity"
+            }
+          },
+          "400": {
+            "description": "Invalid request, activity date outside the trip dates, or trip not open for planning.",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "401": {
+            "description": "Sign in is required.",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "403": {
+            "description": "Not a trip member, or not permitted to change this activity.",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "Trip or activity not found.",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "500": {
+            "description": "An unexpected server or database error occurred.",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Activities"
+        ],
+        "summary": "Replace editable activity fields",
+        "description": "Only the proposer or organizer may edit while the trip is planning. Omitted optional fields are removed. Votes and status are preserved",
+        "parameters": [
+          {
+            "name": "tripId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "pattern": "^[a-fA-F0-9]{24}$"
+          },
+          {
+            "name": "activityId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "pattern": "^[a-fA-F0-9]{24}$"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/ActivityInput"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Activity updated.",
+            "schema": {
+              "$ref": "#/definitions/Message"
+            }
+          },
+          "400": {
+            "description": "Invalid request, activity date outside the trip dates, or trip not open for planning.",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "401": {
+            "description": "Sign in is required.",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "403": {
+            "description": "Not a trip member, or not permitted to change this activity.",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "Trip or activity not found.",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "500": {
+            "description": "An unexpected server or database error occurred.",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Activities"
+        ],
+        "summary": "Delete an activity",
+        "description": "Only the proposer or organizer may delete while the trip is planning",
+        "parameters": [
+          {
+            "name": "tripId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "pattern": "^[a-fA-F0-9]{24}$"
+          },
+          {
+            "name": "activityId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "pattern": "^[a-fA-F0-9]{24}$"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Activity deleted. No response body"
+          },
+          "400": {
+            "description": "Invalid request, activity date outside the trip dates, or trip not open for planning.",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "401": {
+            "description": "Sign in is required.",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "403": {
+            "description": "Not a trip member, or not permitted to change this activity.",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "Trip or activity not found.",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "500": {
+            "description": "An unexpected server or database error occurred.",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "ActivityInput": {
+      "type": "object",
+      "required": [
+        "title"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "title": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S",
+          "description": "Required. Must contain non-whitespace text."
+        },
+        "description": {
+          "type": "string",
+          "description": "Optional activity details."
+        },
+        "date": {
+          "type": "string",
+          "format": "date",
+          "description": "Optional YYYY-MM-DD date within the trip dates, using UTC calendar days."
+        },
+        "estimatedCost": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Optional estimated cost in the agreed trip currency."
+        }
+      },
+      "example": {
+        "title": "Visit the night market",
+        "description": "Explore the food stalls together.",
+        "estimatedCost": 15
+      }
+    },
+    "Activity": {
+      "type": "object",
+      "required": [
+        "_id",
+        "tripId",
+        "proposedBy",
+        "title",
+        "votes",
+        "status"
+      ],
+      "properties": {
+        "title": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S",
+          "description": "Required. Must contain non-whitespace text."
+        },
+        "description": {
+          "type": "string",
+          "description": "Optional activity details."
+        },
+        "date": {
+          "type": "string",
+          "format": "date",
+          "description": "Optional YYYY-MM-DD date within the trip dates, using UTC calendar days."
+        },
+        "estimatedCost": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Optional estimated cost in the agreed trip currency."
+        },
+        "_id": {
+          "type": "string",
+          "pattern": "^[a-fA-F0-9]{24}$"
+        },
+        "tripId": {
+          "type": "string",
+          "pattern": "^[a-fA-F0-9]{24}$"
+        },
+        "proposedBy": {
+          "type": "string",
+          "pattern": "^[a-fA-F0-9]{24}$"
+        },
+        "votes": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[a-fA-F0-9]{24}$"
+          },
+          "uniqueItems": true
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "proposed",
+            "selected",
+            "rejected"
+          ]
+        }
+      }
+    },
+    "Message": {
+      "type": "object",
+      "required": [
+        "message"
+      ],
+      "properties": {
+        "message": {
+          "type": "string"
+        }
+      }
+    },
+    "Error": {
+      "type": "object",
+      "required": [
+        "message"
+      ],
+      "properties": {
+        "message": {
+          "type": "string"
+        },
+        "errors": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "field": {
+                "type": "string"
+              },
+              "message": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

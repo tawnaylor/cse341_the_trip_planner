@@ -1,11 +1,69 @@
-// OWNER: Member 3
-// Activities routes. Add GET, POST, PUT, and DELETE here.
+// OWNER: Jacquelyn Kulmus
+// Activities routes. Add GET, POST, PUT, and DELETE here
 // Pattern: router.METHOD(path, isAuthenticated, validationRules, controller.fn)
-const router = require('express').Router();
+
 // const controller = require('../controllers/activities');
 // const validate = require('../validation/activities');
 // const { isAuthenticated } = require('../middleware/authenticate');
 
-// TODO (Member 3): add routes
+// TODO (Jacquelyn): add routes
+const router = require('express').Router();
+const controller = require('../controllers/activities');
+const validate = require('../validation/activities');
+const { isAuthenticated } = require('../middleware/authenticate');
+
+// An additional local check protects Activities while shared auth is a placeholder
+function requireSession(req, res, next) {
+  if (typeof req.isAuthenticated !== 'function' || !req.isAuthenticated() ||
+      !/^[a-fA-F0-9]{24}$/.test(String(req.user?._id))) {
+    return res.status(401).json({ message: 'Sign in is required' });
+  }
+  next();
+}
+
+router.get('/trips/:tripId/activities', isAuthenticated, requireSession,
+  validate.tripIdRules, validate.handleValidation, (req, res) => {
+    // #swagger.tags = ['Activities']
+    // #swagger.summary = 'List activities for a trip'
+    // #swagger.responses[200] = { description: 'Activities returned', schema: [{ $ref: '#/definitions/Activity' }] }
+    return controller.getAll(req, res);
+  });
+
+router.get('/trips/:tripId/activities/:activityId', isAuthenticated, requireSession,
+  validate.tripIdRules, validate.activityIdRules, validate.handleValidation, (req, res) => {
+    // #swagger.tags = ['Activities']
+    // #swagger.summary = 'Get one activity in a trip'
+    // #swagger.responses[200] = { description: 'Activity returned.', schema: { $ref: '#/definitions/Activity' } }
+    return controller.getOne(req, res);
+  });
+
+router.post('/trips/:tripId/activities', isAuthenticated, requireSession,
+  validate.tripIdRules, validate.activityBodyRules, validate.handleValidation, (req, res) => {
+    // #swagger.tags = ['Activities']
+    // #swagger.summary = 'Suggest an activity for a trip'
+    // #swagger.parameters['body'] = { in: 'body', required: true, schema: { $ref: '#/definitions/ActivityInput' } }
+    // #swagger.responses[201] = { description: 'Activity created.', schema: { $ref: '#/definitions/Activity' } }
+    return controller.create(req, res);
+  });
+
+router.put('/trips/:tripId/activities/:activityId', isAuthenticated, requireSession,
+  validate.tripIdRules, validate.activityIdRules, validate.activityBodyRules,
+  validate.handleValidation, (req, res) => {
+    // #swagger.tags = ['Activities']
+    // #swagger.summary = 'Replace editable activity fields'
+    // #swagger.description = 'Only the proposer or organizer may edit while the trip is planning. Omitted optional fields are removed. Votes and status are preserved'
+    // #swagger.parameters['body'] = { in: 'body', required: true, schema: { $ref: '#/definitions/ActivityInput' } }
+    // #swagger.responses[200] = { description: 'Activity updated.', schema: { $ref: '#/definitions/Message' } }
+    return controller.update(req, res);
+  });
+
+router.delete('/trips/:tripId/activities/:activityId', isAuthenticated, requireSession,
+  validate.tripIdRules, validate.activityIdRules, validate.handleValidation, (req, res) => {
+    // #swagger.tags = ['Activities']
+    // #swagger.summary = 'Delete an activity'
+    // #swagger.description = 'Only the proposer or organizer may delete while the trip is planning'
+    // #swagger.responses[204] = { description: 'Activity deleted. No response body' }
+    return controller.remove(req, res);
+  });
 
 module.exports = router;
