@@ -28,8 +28,8 @@ function calendarDay(value) {
   return date.toISOString().slice(0, 10);
 }
 
-// Shared checks and try/catch keep the five handlers small
-function withTrip(action, writing = false) {
+// Voting requires membership and open planning, but not ownership of the proposal
+function withTrip(action, { writing = false, proposerOnly = writing } = {}) {
   return async (req, res) => {
     try {
       // Authentication middleware is currently a pass-through
@@ -69,7 +69,7 @@ function withTrip(action, writing = false) {
         if (!activity) {
           return res.status(404).json({ message: 'Activity not found in this trip' });
         }
-        if (writing && !organizer && !sameId(activity.proposedBy, userId)) {
+        if (proposerOnly && !organizer && !sameId(activity.proposedBy, userId)) {
           return res.status(403).json({
             message: 'Only the proposer or trip organizer can change this activity'
           });
@@ -94,7 +94,12 @@ function withTrip(action, writing = false) {
 }
 
 const getAll = withTrip(async (req, res, { activities, tripId }) => {
-  const results = await activities.find({ tripId }).sort({ _id: 1 }).toArray();
+  const results = await activities.aggregate([
+    { $match: { tripId } },
+    { $addFields: { voteCount: { $size: { $ifNull: ['$votes', []] } } } },
+    { $sort: { voteCount: -1, _id: 1 } },
+    { $project: { voteCount: 0 } }
+  ]).toArray();
   return res.status(200).json(results);
 });
 
@@ -112,7 +117,7 @@ const create = withTrip(async (req, res, { activities, tripId, userId }) => {
   };
   const result = await activities.insertOne(activity);
   return res.status(201).json({ ...activity, _id: result.insertedId });
-}, true);
+}, { writing: true });
 
 const update = withTrip(async (req, res, { activities, filter }) => {
   // PUT replaces editable fields. Omitted optional fields are removed
@@ -128,7 +133,7 @@ const update = withTrip(async (req, res, { activities, filter }) => {
     return res.status(404).json({ message: 'Activity not found' });
   }
   return res.status(200).json({ message: 'Activity updated' });
-}, true);
+}, { writing: true });
 
 const remove = withTrip(async (req, res, { activities, filter }) => {
   const result = await activities.deleteOne(filter);
@@ -136,6 +141,34 @@ const remove = withTrip(async (req, res, { activities, filter }) => {
     return res.status(404).json({ message: 'Activity not found' });
   }
   return res.status(204).send();
-}, true);
+}, { writing: true });
 
-module.exports = { getAll, getOne, create, update, remove };
+const vote = withTrip(async (req, res, { activities, filter, userId }) => {
+  const currentVotes = { $ifNull: ['$votes', []] };
+  const activity = await activities.findOneAndUpdate(filter, [
+    {
+      $set: {
+        votes: {
+          $cond: [
+            { $in: [userId, currentVotes] },
+            { $setDifference: [currentVotes, [userId]] },
+            { $setUnion: [currentVotes, [userId]] }
+          ]
+        }
+      }
+    }
+  ], { returnDocument: 'after', includeResultMetadata: false });
+
+  if (!activity) {
+    return res.status(404).json({ message: 'Activity not found in this trip' });
+  }
+  const voted = activity.votes.some((id) => sameId(id, userId));
+  return res.status(200).json({
+    message: voted ? 'Vote added' : 'Vote removed',
+    activityId: activity._id,
+    voted,
+    voteCount: activity.votes.length
+  });
+}, { writing: true, proposerOnly: false });
+
+module.exports = { getAll, getOne, create, update, remove, vote };

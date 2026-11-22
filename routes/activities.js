@@ -24,7 +24,8 @@ function requireSession(req, res, next) {
 router.get('/trips/:tripId/activities', isAuthenticated, requireSession,
   validate.tripIdRules, validate.handleValidation, (req, res) => {
     // #swagger.tags = ['Activities']
-    // #swagger.summary = 'List activities for a trip'
+    // #swagger.summary = 'List activities for a trip, most votes first'
+    // #swagger.description = 'Equal vote counts use activity ID order for a stable display. This does not select an itinerary winner'
     // #swagger.responses[200] = { description: 'Activities returned', schema: [{ $ref: '#/definitions/Activity' }] }
     return controller.getAll(req, res);
   });
@@ -64,6 +65,17 @@ router.delete('/trips/:tripId/activities/:activityId', isAuthenticated, requireS
     // #swagger.description = 'Only the proposer or organizer may delete while the trip is planning'
     // #swagger.responses[204] = { description: 'Activity deleted. No response body' }
     return controller.remove(req, res);
+  });
+
+router.put('/trips/:tripId/activities/:activityId/vote', isAuthenticated, requireSession,
+  validate.tripIdRules, validate.activityIdRules, validate.voteBodyRules,
+  validate.handleValidation, (req, res) => {
+    // #swagger.tags = ['Activities']
+    // #swagger.summary = 'Toggle your vote for an activity'
+    // #swagger.description = 'Any signed-in trip member or organizer can vote while the trip is planning. No request body. First call adds your vote; next call removes it. Each user has at most one vote per activity and may vote on multiple activities. Every call toggles, including retries; check the activity before retrying an uncertain request. Winner selection happens separately when the itinerary is locked'
+    // #swagger.autoBody = false
+    // #swagger.responses[200] = { description: 'Vote added or removed.', schema: { $ref: '#/definitions/VoteResult' } }
+    return controller.vote(req, res);
   });
 
 module.exports = router;

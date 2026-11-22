@@ -3,13 +3,13 @@
   "info": {
     "title": "Group Trip Planner API",
     "version": "1.0.0",
-    "description": "Activities CRUD for group trips. Protected routes require a signed-in session. Authentication integration is still pending; Activities return 401 until a valid session is available."
+    "description": "Activities CRUD and voting for group trips. Protected routes require a signed-in session. Authentication integration is still pending; Activities return 401 until a valid session is available"
   },
   "basePath": "/",
   "tags": [
     {
       "name": "Activities",
-      "description": "Create, view, update, and delete trip activities."
+      "description": "Create, view, update, delete, and vote on trip activities"
     }
   ],
   "consumes": [
@@ -34,8 +34,8 @@
         "tags": [
           "Activities"
         ],
-        "summary": "List activities for a trip",
-        "description": "",
+        "summary": "List activities for a trip, most votes first",
+        "description": "Equal vote counts use activity ID order for a stable display. This does not select an itinerary winner",
         "parameters": [
           {
             "name": "tripId",
@@ -71,19 +71,19 @@
             }
           },
           "403": {
-            "description": "Not a trip member, or not permitted to change this activity.",
+            "description": "Not a trip member, or not permitted to change this activity",
             "schema": {
               "$ref": "#/definitions/Error"
             }
           },
           "404": {
-            "description": "Trip or activity not found.",
+            "description": "Trip or activity not found",
             "schema": {
               "$ref": "#/definitions/Error"
             }
           },
           "500": {
-            "description": "An unexpected server or database error occurred.",
+            "description": "An unexpected server or database error occurred",
             "schema": {
               "$ref": "#/definitions/Error"
             }
@@ -133,19 +133,19 @@
             }
           },
           "403": {
-            "description": "Not a trip member, or not permitted to change this activity.",
+            "description": "Not a trip member, or not permitted to change this activity",
             "schema": {
               "$ref": "#/definitions/Error"
             }
           },
           "404": {
-            "description": "Trip or activity not found.",
+            "description": "Trip or activity not found",
             "schema": {
               "$ref": "#/definitions/Error"
             }
           },
           "500": {
-            "description": "An unexpected server or database error occurred.",
+            "description": "An unexpected server or database error occurred",
             "schema": {
               "$ref": "#/definitions/Error"
             }
@@ -196,19 +196,19 @@
             }
           },
           "403": {
-            "description": "Not a trip member, or not permitted to change this activity.",
+            "description": "Not a trip member, or not permitted to change this activity",
             "schema": {
               "$ref": "#/definitions/Error"
             }
           },
           "404": {
-            "description": "Trip or activity not found.",
+            "description": "Trip or activity not found",
             "schema": {
               "$ref": "#/definitions/Error"
             }
           },
           "500": {
-            "description": "An unexpected server or database error occurred.",
+            "description": "An unexpected server or database error occurred",
             "schema": {
               "$ref": "#/definitions/Error"
             }
@@ -265,19 +265,19 @@
             }
           },
           "403": {
-            "description": "Not a trip member, or not permitted to change this activity.",
+            "description": "Not a trip member, or not permitted to change this activity",
             "schema": {
               "$ref": "#/definitions/Error"
             }
           },
           "404": {
-            "description": "Trip or activity not found.",
+            "description": "Trip or activity not found",
             "schema": {
               "$ref": "#/definitions/Error"
             }
           },
           "500": {
-            "description": "An unexpected server or database error occurred.",
+            "description": "An unexpected server or database error occurred",
             "schema": {
               "$ref": "#/definitions/Error"
             }
@@ -323,24 +323,88 @@
             }
           },
           "403": {
-            "description": "Not a trip member, or not permitted to change this activity.",
+            "description": "Not a trip member, or not permitted to change this activity",
             "schema": {
               "$ref": "#/definitions/Error"
             }
           },
           "404": {
-            "description": "Trip or activity not found.",
+            "description": "Trip or activity not found",
             "schema": {
               "$ref": "#/definitions/Error"
             }
           },
           "500": {
-            "description": "An unexpected server or database error occurred.",
+            "description": "An unexpected server or database error occurred",
             "schema": {
               "$ref": "#/definitions/Error"
             }
           }
         }
+      }
+    },
+    "/trips/{tripId}/activities/{activityId}/vote": {
+      "put": {
+        "tags": [
+          "Activities"
+        ],
+        "summary": "Toggle your vote for an activity",
+        "description": "Any signed-in trip member or organizer can vote while the trip is planning. No request body. First call adds your vote; next call removes it. Each user has at most one vote per activity and may vote on multiple activities. Every call toggles, including retries; check the activity before retrying an uncertain request. Winner selection happens separately when the itinerary is locked",
+        "parameters": [
+          {
+            "name": "tripId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "pattern": "^[a-fA-F0-9]{24}$"
+          },
+          {
+            "name": "activityId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "pattern": "^[a-fA-F0-9]{24}$"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Vote added or removed.",
+            "schema": {
+              "$ref": "#/definitions/VoteResult"
+            }
+          },
+          "400": {
+            "description": "Invalid request, activity date outside the trip dates, or trip not open for planning.",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "401": {
+            "description": "Sign in is required.",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "403": {
+            "description": "Not a trip member, or not permitted to change this activity",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "Trip or activity not found",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "500": {
+            "description": "An unexpected server or database error occurred",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        },
+        "autoBody": false
       }
     }
   },
@@ -356,26 +420,26 @@
           "type": "string",
           "minLength": 1,
           "pattern": "\\S",
-          "description": "Required. Must contain non-whitespace text."
+          "description": "Required. Must contain non-whitespace text"
         },
         "description": {
           "type": "string",
-          "description": "Optional activity details."
+          "description": "Optional activity details"
         },
         "date": {
           "type": "string",
           "format": "date",
-          "description": "Optional YYYY-MM-DD date within the trip dates, using UTC calendar days."
+          "description": "Optional YYYY-MM-DD date within the trip dates, using UTC calendar days"
         },
         "estimatedCost": {
           "type": "number",
           "minimum": 0,
-          "description": "Optional estimated cost in the agreed trip currency."
+          "description": "Optional estimated cost in the agreed trip currency"
         }
       },
       "example": {
         "title": "Visit the night market",
-        "description": "Explore the food stalls together.",
+        "description": "Explore the food stalls together",
         "estimatedCost": 15
       }
     },
@@ -394,21 +458,21 @@
           "type": "string",
           "minLength": 1,
           "pattern": "\\S",
-          "description": "Required. Must contain non-whitespace text."
+          "description": "Required. Must contain non-whitespace text"
         },
         "description": {
           "type": "string",
-          "description": "Optional activity details."
+          "description": "Optional activity details"
         },
         "date": {
           "type": "string",
           "format": "date",
-          "description": "Optional YYYY-MM-DD date within the trip dates, using UTC calendar days."
+          "description": "Optional YYYY-MM-DD date within the trip dates, using UTC calendar days"
         },
         "estimatedCost": {
           "type": "number",
           "minimum": 0,
-          "description": "Optional estimated cost in the agreed trip currency."
+          "description": "Optional estimated cost in the agreed trip currency"
         },
         "_id": {
           "type": "string",
@@ -438,6 +502,38 @@
             "rejected"
           ]
         }
+      }
+    },
+    "VoteResult": {
+      "type": "object",
+      "required": [
+        "message",
+        "activityId",
+        "voted",
+        "voteCount"
+      ],
+      "properties": {
+        "message": {
+          "type": "string"
+        },
+        "activityId": {
+          "type": "string",
+          "pattern": "^[a-fA-F0-9]{24}$"
+        },
+        "voted": {
+          "type": "boolean",
+          "description": "Whether you have a vote after this request"
+        },
+        "voteCount": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "example": {
+        "message": "Vote added",
+        "activityId": "67a123456789abcdef000003",
+        "voted": true,
+        "voteCount": 1
       }
     },
     "Message": {

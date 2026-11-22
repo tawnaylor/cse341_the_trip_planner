@@ -15,22 +15,22 @@ const activityFields = {
     type: 'string',
     minLength: 1,
     pattern: '\\S',
-    description: 'Required. Must contain non-whitespace text.'
+    description: 'Required. Must contain non-whitespace text'
   },
   description: {
     type: 'string',
-    description: 'Optional activity details.'
+    description: 'Optional activity details'
   },
   date: {
     type: 'string',
     format: 'date',
     description:
-      'Optional YYYY-MM-DD date within the trip dates, using UTC calendar days.'
+      'Optional YYYY-MM-DD date within the trip dates, using UTC calendar days'
   },
   estimatedCost: {
     type: 'number',
     minimum: 0,
-    description: 'Optional estimated cost in the agreed trip currency.'
+    description: 'Optional estimated cost in the agreed trip currency'
   }
 };
 
@@ -39,9 +39,9 @@ const doc = {
     title: 'Group Trip Planner API',
     version: '1.0.0',
     description:
-      'Activities CRUD for group trips. Protected routes require a signed-in ' +
+      'Activities CRUD and voting for group trips. Protected routes require a signed-in ' +
       'session. Authentication integration is still pending; Activities ' +
-      'return 401 until a valid session is available.'
+      'return 401 until a valid session is available'
   },
 
   consumes: ['application/json'],
@@ -50,7 +50,7 @@ const doc = {
   tags: [
     {
       name: 'Activities',
-      description: 'Create, view, update, and delete trip activities.'
+      description: 'Create, view, update, delete, and vote on trip activities'
     }
   ],
 
@@ -63,7 +63,7 @@ const doc = {
       properties: activityFields,
       example: {
         title: 'Visit the night market',
-        description: 'Explore the food stalls together.',
+        description: 'Explore the food stalls together',
         estimatedCost: 15
       }
     },
@@ -92,6 +92,23 @@ const doc = {
           type: 'string',
           enum: ['proposed', 'selected', 'rejected']
         }
+      }
+    },
+
+    VoteResult: {
+      type: 'object',
+      required: ['message', 'activityId', 'voted', 'voteCount'],
+      properties: {
+        message: { type: 'string' },
+        activityId: id,
+        voted: { type: 'boolean', description: 'Whether you have a vote after this request' },
+        voteCount: { type: 'integer', minimum: 0 }
+      },
+      example: {
+        message: 'Vote added',
+        activityId: '67a123456789abcdef000003',
+        voted: true,
+        voteCount: 1
       }
     },
 
@@ -151,7 +168,8 @@ async function generate() {
 
   const activityPaths = [
     '/trips/{tripId}/activities',
-    '/trips/{tripId}/activities/{activityId}'
+    '/trips/{tripId}/activities/{activityId}',
+    '/trips/{tripId}/activities/{activityId}/vote'
   ];
 
   const errorResponses = {
@@ -160,15 +178,15 @@ async function generate() {
       'or trip not open for planning.',
     401: 'Sign in is required.',
     403:
-      'Not a trip member, or not permitted to change this activity.',
-    404: 'Trip or activity not found.',
-    500: 'An unexpected server or database error occurred.'
+      'Not a trip member, or not permitted to change this activity',
+    404: 'Trip or activity not found',
+    500: 'An unexpected server or database error occurred'
   };
 
   const successDescriptions = {
-    200: 'Successful request.',
-    201: 'Activity created.',
-    204: 'Activity deleted. No response body.'
+    200: 'Successful request',
+    201: 'Activity created',
+    204: 'Activity deleted. No response body'
   };
 
   for (const [route, operations] of Object.entries(generated.paths)) {
@@ -186,7 +204,7 @@ async function generate() {
       // These endpoints accept path parameters and JSON bodies
       operation.parameters = (operation.parameters || []).filter(
         (parameter) =>
-          parameter.in === 'path' || parameter.in === 'body'
+          parameter.in === 'path' || (parameter.in === 'body' && !route.endsWith('/vote'))
       );
 
       // Describe MongoDB IDs consistently

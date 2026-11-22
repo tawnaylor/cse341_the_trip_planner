@@ -12,6 +12,13 @@ const tripIdRules = [
 const activityIdRules = [
   param('activityId').isMongoId().withMessage('A valid activity ID is required')
 ];
+// The voter always comes from the authenticated session, never the request body
+const voteBodyRules = [
+  body().custom((value) => value === undefined || (
+    value !== null && typeof value === 'object' && !Array.isArray(value) &&
+    Object.keys(value).length === 0
+  )).withMessage('Voting takes no request body; the signed-in user supplies the vote')
+];
 const activityBodyRules = [
   body().custom((value) => {
     const allowed = ['title', 'description', 'date', 'estimatedCost'];
@@ -49,4 +56,4 @@ function handleValidation(req, res, next) {
   next();
 }
 
-module.exports = { tripIdRules, activityIdRules, activityBodyRules, handleValidation };
+module.exports = { tripIdRules, activityIdRules, activityBodyRules, voteBodyRules, handleValidation };
