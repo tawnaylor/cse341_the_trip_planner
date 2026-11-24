@@ -17,6 +17,12 @@ function currentUserId(req) {
   return id != null && /^[a-fA-F0-9]{24}$/.test(String(id)) ? new ObjectId(String(id)) : null;
 }
 
+// Runs before validation so a signed-out request gets 401 rather than 400.
+exports.requireSession = (req, res, next) => {
+  if (!currentUserId(req)) return res.status(401).json({ message: 'Sign in is required' });
+  next();
+};
+
 // Loads a trip and checks that the signed-in user belongs to it.
 async function memberTrip(req, res, tripId) {
   const userId = currentUserId(req);

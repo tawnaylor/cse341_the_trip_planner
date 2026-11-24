@@ -42,6 +42,23 @@ beforeEach(() => {
   app.use(routes);
 });
 
+describe('expenses routes on the real app', () => {
+  const realApp = jest.requireActual('../server');
+  const id = String(tripId);
+
+  test.each([
+    ['get', `/trips/${id}/expenses`],
+    ['get', `/trips/${id}/settlement`],
+    ['post', `/trips/${id}/expenses`],
+    ['get', `/expenses/${id}`],
+    ['put', `/expenses/${id}`],
+    ['delete', `/expenses/${id}`],
+  ])('%s %s returns 401 when logged out', async (method, path) => {
+    const res = await request(realApp)[method](path);
+    expect(res.status).toBe(401);
+  });
+});
+
 describe('validation', () => {
   it('rejects a malformed trip id', async () => {
     const res = await request(app).get('/trips/not-an-id/expenses');
@@ -135,6 +152,13 @@ describe('update and delete', () => {
 });
 
 describe('settlement', () => {
+  it('returns no payments when there are no expenses', async () => {
+    expensesCol.find.mockReturnValue({ toArray: async () => [] });
+    const res = await request(app).get(`/trips/${tripId}/settlement`);
+    expect(res.status).toBe(200);
+    expect(res.body.payments).toEqual([]);
+  });
+
   it('returns balances and payments', async () => {
     const res = await request(app).get(`/trips/${tripId}/settlement`);
     expect(res.status).toBe(200);

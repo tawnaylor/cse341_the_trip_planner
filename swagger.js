@@ -51,11 +51,103 @@ const doc = {
     {
       name: 'Activities',
       description: 'Create, view, update, delete, and vote on trip activities'
+    },
+    {
+      name: 'Expenses',
+      description: 'Log shared expenses and see who owes whom. All amounts are integer cents'
     }
   ],
 
   // Use standard Swagger schemas without automatic schema conversion
   '@definitions': {
+    ExpenseInput: {
+      type: 'object',
+      required: ['description', 'amountCents', 'paidBy', 'splitType', 'category', 'date'],
+      properties: {
+        description: { type: 'string', minLength: 2, maxLength: 100, example: 'Cabin rental' },
+        amountCents: { type: 'integer', minimum: 1, example: 45000 },
+        paidBy: { ...id, description: 'Trip member who paid' },
+        splitType: { type: 'string', enum: ['equal', 'percentage', 'custom'] },
+        splits: {
+          type: 'array',
+          description:
+            'Required for percentage (userId and percent, totaling 100) and custom ' +
+            '(userId and amountCents, totaling amountCents) splits. Ignored for equal',
+          items: {
+            type: 'object',
+            required: ['userId'],
+            properties: {
+              userId: id,
+              percent: { type: 'number', exclusiveMinimum: 0, maximum: 100 },
+              amountCents: { type: 'integer', minimum: 0 }
+            }
+          }
+        },
+        category: {
+          type: 'string',
+          enum: ['lodging', 'food', 'transport', 'activity', 'other']
+        },
+        date: { type: 'string', format: 'date' }
+      },
+      example: {
+        description: 'Cabin rental',
+        amountCents: 45000,
+        paidBy: '67a123456789abcdef000002',
+        splitType: 'equal',
+        category: 'lodging',
+        date: '2026-07-01'
+      }
+    },
+
+    Expense: {
+      type: 'object',
+      required: [
+        '_id', 'tripId', 'description', 'amountCents', 'paidBy',
+        'splitType', 'splits', 'category', 'date'
+      ],
+      properties: {
+        _id: id,
+        tripId: id,
+        description: { type: 'string' },
+        amountCents: { type: 'integer' },
+        paidBy: id,
+        splitType: { type: 'string', enum: ['equal', 'percentage', 'custom'] },
+        splits: { type: 'array', items: { type: 'object' } },
+        category: { type: 'string' },
+        date: { type: 'string', format: 'date-time' }
+      }
+    },
+
+    Settlement: {
+      type: 'object',
+      required: ['balances', 'payments'],
+      properties: {
+        balances: {
+          type: 'object',
+          description: 'Net cents per user ID. Positive is owed money, negative owes money',
+          additionalProperties: { type: 'integer' }
+        },
+        payments: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              from: id,
+              to: id,
+              amountCents: { type: 'integer', minimum: 1 }
+            }
+          }
+        }
+      },
+      example: {
+        balances: { '67a123456789abcdef000002': 1500, '67a123456789abcdef000003': -1500 },
+        payments: [{
+          from: '67a123456789abcdef000003',
+          to: '67a123456789abcdef000002',
+          amountCents: 1500
+        }]
+      }
+    },
     ActivityInput: {
       type: 'object',
       required: ['title'],
@@ -239,6 +331,37 @@ async function generate() {
           schema: {
             $ref: '#/definitions/Error'
           }
+        };
+      }
+    }
+  }
+
+  const expensePaths = [
+    '/trips/{tripId}/expenses',
+    '/trips/{tripId}/settlement',
+    '/expenses/{id}'
+  ];
+
+  const expenseErrors = {
+    400: 'Invalid ID, invalid request body, or invalid split',
+    401: 'Sign in is required',
+    403: 'Not a member of this trip',
+    404: 'Trip or expense not found',
+    500: 'An unexpected server or database error occurred'
+  };
+
+  for (const route of expensePaths) {
+    for (const operation of Object.values(generated.paths[route] || {})) {
+      for (const parameter of operation.parameters || []) {
+        if (parameter.in === 'path') {
+          Object.assign(parameter, id, { required: true });
+        }
+      }
+
+      for (const [status, description] of Object.entries(expenseErrors)) {
+        operation.responses[status] = {
+          description,
+          schema: { $ref: '#/definitions/Error' }
         };
       }
     }
