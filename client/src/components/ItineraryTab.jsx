@@ -1,5 +1,6 @@
 export default function ItineraryTab({ trip, goTo }) {
-  if (trip.status === 'planning' || !trip.itinerary || trip.itinerary.length === 0) {
+  const days = trip.itinerary || [];
+  if (trip.status === 'planning') {
     return (
       <section className="card" style={{ display: 'flex', flexDirection: 'column', gap: 12, alignItems: 'flex-start' }}>
         <h2 style={{ fontSize: 22 }}>Itinerary</h2>
@@ -8,11 +9,19 @@ export default function ItineraryTab({ trip, goTo }) {
       </section>
     );
   }
+  if (days.length === 0) {
+    return (
+      <section className="card" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+        <h2 style={{ fontSize: 22 }}>Itinerary</h2>
+        <p className="muted">This trip is locked, but no days have been added to the itinerary yet.</p>
+      </section>
+    );
+  }
   return (
     <section className="card" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       <h2 style={{ fontSize: 22 }}>Itinerary</h2>
       <ol className="list">
-        {trip.itinerary.map((d, i) => (
+        {days.map((d, i) => (
           <li key={i}><strong>Day {d.day}</strong> · {d.title}</li>
         ))}
       </ol>

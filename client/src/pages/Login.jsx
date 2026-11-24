@@ -1,6 +1,6 @@
 import { Navigate } from 'react-router-dom';
 import { API_BASE } from '../api';
-import { useAuth } from '../AuthContext';
+import { useAuth } from '../auth';
 
 const features = [
   ['Vote on activities', 'One vote each, so the best ideas rise to the top.'],

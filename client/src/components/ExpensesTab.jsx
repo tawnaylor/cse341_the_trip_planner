@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { api } from '../api';
-import { money, dateLabel } from '../format';
+import { money, dateLabel, toCents } from '../format';
 
 const SPLIT_HINTS = {
   equal: 'Everyone pays the same share. Leftover cents go to the first members.',
@@ -14,14 +14,17 @@ export default function ExpensesTab({ trip, names }) {
   const [split, setSplit] = useState('equal');
   const [error, setError] = useState('');
 
-  const load = () => api(`/trips/${trip._id}/expenses`).then(setItems).catch((e) => setError(e.message));
-  useEffect(() => { load(); }, [trip._id]);
+  const load = useCallback(
+    () => api(`/trips/${trip._id}/expenses`).then(setItems).catch((e) => setError(e.message)),
+    [trip._id]
+  );
+  useEffect(() => { load(); }, [load]);
 
   async function save(e) {
     e.preventDefault();
     const f = new FormData(e.target);
-    const amountCents = Math.round(parseFloat(f.get('amount')) * 100);
-    if (!(amountCents > 0)) {
+    const amountCents = toCents(f.get('amount'));
+    if (!amountCents) {
       setError('Enter an amount greater than zero, like 45.50');
       return;
     }
@@ -34,12 +37,20 @@ export default function ExpensesTab({ trip, names }) {
       date: f.get('date'),
     };
     if (split !== 'equal') {
-      body.splits = trip.memberIds.map((uid) => {
-        const v = parseFloat(f.get(`split-${uid}`) || '0');
-        return split === 'percentage'
-          ? { userId: uid, percent: v }
-          : { userId: uid, amountCents: Math.round(v * 100) };
-      }).filter((s) => (s.percent ?? s.amountCents) > 0);
+      const splits = [];
+      for (const uid of trip.memberIds) {
+        const raw = String(f.get(`split-${uid}`) || '').trim();
+        if (raw === '') continue;
+        const v = split === 'percentage'
+          ? (/^\d+(\.\d+)?$/.test(raw) ? Number(raw) : null)
+          : toCents(raw);
+        if (v === null) {
+          setError(`Enter a valid number for ${names[uid] || 'each person'}`);
+          return;
+        }
+        if (v > 0) splits.push(split === 'percentage' ? { userId: uid, percent: v } : { userId: uid, amountCents: v });
+      }
+      body.splits = splits;
     }
     try {
       await api(`/trips/${trip._id}/expenses`, { method: 'POST', body });

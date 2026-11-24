@@ -1,14 +1,18 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { api } from '../api';
 
 export default function ActivitiesTab({ trip, names, reloadTrip, goTo }) {
   const [items, setItems] = useState([]);
   const [title, setTitle] = useState('');
   const [error, setError] = useState('');
+  const [busy, setBusy] = useState(false);
   const planning = trip.status === 'planning';
 
-  const load = () => api(`/trips/${trip._id}/activities`).then(setItems).catch((e) => setError(e.message));
-  useEffect(() => { load(); }, [trip._id]);
+  const load = useCallback(
+    () => api(`/trips/${trip._id}/activities`).then(setItems).catch((e) => setError(e.message)),
+    [trip._id]
+  );
+  useEffect(() => { load(); }, [load]);
 
   async function propose(e) {
     e.preventDefault();
@@ -18,20 +22,28 @@ export default function ActivitiesTab({ trip, names, reloadTrip, goTo }) {
     } catch (err) { setError(err.message); }
   }
 
+  // Voting toggles on every call, so block a second click until the first finishes.
   async function vote(id) {
+    if (busy) return;
+    setBusy(true);
     try {
       await api(`/trips/${trip._id}/activities/${id}/vote`, { method: 'PUT' });
-      setError(''); load();
+      setError('');
+      await load();
     } catch (err) { setError(err.message); }
+    finally { setBusy(false); }
   }
 
   async function lock() {
+    if (busy) return;
+    setBusy(true);
     try {
       await api(`/trips/${trip._id}/lock`, { method: 'PUT' });
       setError('');
       await reloadTrip();
       goTo('itinerary');
     } catch (err) { setError(err.message); }
+    finally { setBusy(false); }
   }
 
   return (
@@ -52,7 +64,7 @@ export default function ActivitiesTab({ trip, names, reloadTrip, goTo }) {
               </div>
               <div className="row">
                 <span><strong>{a.votes.length}</strong> {a.votes.length === 1 ? 'vote' : 'votes'}</span>
-                <button className="btn btn-ghost" onClick={() => vote(a._id)} disabled={!planning} aria-label={`Vote for ${a.title}`}>Vote</button>
+                <button className="btn btn-ghost" onClick={() => vote(a._id)} disabled={!planning || busy} aria-label={`Vote for ${a.title}`}>Vote</button>
               </div>
             </li>
           ))}
@@ -73,7 +85,7 @@ export default function ActivitiesTab({ trip, names, reloadTrip, goTo }) {
         <h2 style={{ fontSize: 20 }}>Top picks</h2>
         <ol>{items.slice(0, 3).map((a) => <li key={a._id}>{a.title}</li>)}</ol>
         {planning
-          ? <button className="btn btn-accent" onClick={lock}>Lock itinerary</button>
+          ? <button className="btn btn-accent" onClick={lock} disabled={busy}>Lock itinerary</button>
           : <div className="chip chip-locked">Itinerary locked</div>}
       </aside>
     </div>

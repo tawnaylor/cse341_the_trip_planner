@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { api } from '../api';
 import { dateLabel } from '../format';
@@ -11,19 +11,27 @@ const TABS = [['activities', 'Activities'], ['itinerary', 'Itinerary'], ['expens
 
 export default function TripDetail() {
   const { id } = useParams();
+  // Keying by id gives each trip fresh state, so a failed load or the selected tab never carries over.
+  return <TripView key={id} id={id} />;
+}
+
+function TripView({ id }) {
   const [trip, setTrip] = useState(null);
   const [names, setNames] = useState({});
   const [tab, setTab] = useState('activities');
   const [error, setError] = useState('');
 
-  const loadTrip = () => api(`/trips/${id}`).then(setTrip).catch((e) => setError(e.message));
+  const loadTrip = useCallback(
+    () => api(`/trips/${id}`).then(setTrip).catch((e) => setError(e.message)),
+    [id]
+  );
 
   useEffect(() => {
     loadTrip();
     api('/users').then((users) => {
       setNames(Object.fromEntries(users.map((u) => [u._id, u.displayName])));
     }).catch(() => {});
-  }, [id]);
+  }, [loadTrip]);
 
   if (error) return <div className="error" role="alert">{error}</div>;
   if (!trip) return <p>Loading...</p>;

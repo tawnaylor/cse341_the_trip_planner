@@ -1,6 +1,6 @@
 import { Link, Outlet, Navigate } from 'react-router-dom';
 import { API_BASE } from '../api';
-import { useAuth } from '../AuthContext';
+import { useAuth } from '../auth';
 
 export default function Layout() {
   const { status } = useAuth();

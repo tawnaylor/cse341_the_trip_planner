@@ -1,8 +1,6 @@
-import { createContext, useContext, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { api } from './api';
-
-const AuthContext = createContext(null);
-export const useAuth = () => useContext(AuthContext);
+import { AuthContext } from './auth';
 
 export function AuthProvider({ children }) {
   const [status, setStatus] = useState('loading'); // loading | in | out
