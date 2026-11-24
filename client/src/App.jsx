@@ -1,21 +1,17 @@
-import { useEffect, useState } from 'react';
-import { api } from './api';
+import { Routes, Route } from 'react-router-dom';
+import Layout from './components/Layout';
+import Login from './pages/Login';
+import Trips from './pages/Trips';
+import TripDetail from './pages/TripDetail';
 
 export default function App() {
-  const [status, setStatus] = useState('Checking the API...');
-
-  useEffect(() => {
-    api('/')
-      .then((data) => setStatus(data.message))
-      .catch((err) => setStatus(`API unavailable: ${err.message}`));
-  }, []);
-
   return (
-    <main className="container">
-      <div className="card">
-        <h1>Group Trip Planner</h1>
-        <p className="muted">{status}</p>
-      </div>
-    </main>
+    <Routes>
+      <Route path="/" element={<Login />} />
+      <Route element={<Layout />}>
+        <Route path="/trips" element={<Trips />} />
+        <Route path="/trips/:id" element={<TripDetail />} />
+      </Route>
+    </Routes>
   );
 }
