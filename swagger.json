@@ -20,7 +20,98 @@
       "get": {
         "summary": "API welcome message",
         "responses": {
-          "200": { "description": "OK" }
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/trips/{tripId}/activities": {
+      "post": {
+        "tags": ["Activities"],
+        "summary": "Suggest an activity for a trip",
+        "description": "Planned behavior: a signed-in trip member can suggest an activity while planning is open. The server gets proposedBy from the signed-in user and initializes votes and status.",
+        "parameters": [
+          {
+            "name": "tripId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "pattern": "^[a-fA-F0-9]{24}$",
+            "description": "The MongoDB ID of the trip."
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "required": ["title"],
+              "additionalProperties": false,
+              "properties": {
+                "title": {
+                  "type": "string",
+                  "description": "Activity title. Must contain non-whitespace text."
+                },
+                "description": {
+                  "type": "string",
+                  "description": "Optional activity details."
+                },
+                "date": {
+                  "type": "string",
+                  "format": "date",
+                  "description": "Optional activity date within the trip dates."
+                },
+                "estimatedCost": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "Optional estimated cost, using the trip's agreed currency."
+                }
+              },
+              "example": {
+                "title": "Visit the night market",
+                "description": "Walk through the food stalls together.",
+                "estimatedCost": 15
+              }
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Activity created.",
+            "examples": {
+              "application/json": {
+                "_id": "67a123456789abcdef000003",
+                "tripId": "67a123456789abcdef000001",
+                "proposedBy": "67a123456789abcdef000002",
+                "title": "Visit the night market",
+                "description": "Walk through the food stalls together.",
+                "estimatedCost": 15,
+                "votes": [],
+                "status": "proposed"
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request information, malformed trip ID, or trip planning is locked.",
+            "examples": {
+              "application/json": {
+                "message": "Estimated cost must be zero or greater."
+              }
+            }
+          },
+          "401": {
+            "description": "Sign-in is required."
+          },
+          "403": {
+            "description": "The signed-in user is not a member of this trip."
+          },
+          "404": {
+            "description": "The trip was not found."
+          },
+          "500": {
+            "description": "An unexpected server error occurred."
+          }
         }
       }
     }
