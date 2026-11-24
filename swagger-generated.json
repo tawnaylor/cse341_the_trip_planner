@@ -10,6 +10,10 @@
     {
       "name": "Activities",
       "description": "Create, view, update, delete, and vote on trip activities"
+    },
+    {
+      "name": "Expenses",
+      "description": "Log shared expenses and see who owes whom. All amounts are integer cents"
     }
   ],
   "consumes": [
@@ -406,9 +410,549 @@
         },
         "autoBody": false
       }
+    },
+    "/trips/{tripId}/expenses": {
+      "get": {
+        "tags": [
+          "Expenses"
+        ],
+        "summary": "List a trip expenses, newest first",
+        "description": "",
+        "parameters": [
+          {
+            "name": "tripId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "pattern": "^[a-fA-F0-9]{24}$"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Expenses returned",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Expense"
+              },
+              "xml": {
+                "name": "main"
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid ID, invalid request body, or invalid split",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "401": {
+            "description": "Sign in is required",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "403": {
+            "description": "Not a member of this trip",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "Trip or expense not found",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "500": {
+            "description": "An unexpected server or database error occurred",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Expenses"
+        ],
+        "summary": "Log an expense",
+        "description": "",
+        "parameters": [
+          {
+            "name": "tripId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "pattern": "^[a-fA-F0-9]{24}$"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/ExpenseInput"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Expense created",
+            "schema": {
+              "$ref": "#/definitions/Expense"
+            }
+          },
+          "400": {
+            "description": "Invalid ID, invalid request body, or invalid split",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "401": {
+            "description": "Sign in is required",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "403": {
+            "description": "Not a member of this trip",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "Trip or expense not found",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "500": {
+            "description": "An unexpected server or database error occurred",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
+    "/trips/{tripId}/settlement": {
+      "get": {
+        "tags": [
+          "Expenses"
+        ],
+        "summary": "Balances and who pays whom",
+        "description": "Positive balances are owed money, negative balances owe money. All amounts are in cents",
+        "parameters": [
+          {
+            "name": "tripId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "pattern": "^[a-fA-F0-9]{24}$"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Balances and payments",
+            "schema": {
+              "$ref": "#/definitions/Settlement"
+            }
+          },
+          "400": {
+            "description": "Invalid ID, invalid request body, or invalid split",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "401": {
+            "description": "Sign in is required",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "403": {
+            "description": "Not a member of this trip",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "Trip or expense not found",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "500": {
+            "description": "An unexpected server or database error occurred",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
+    "/expenses/{id}": {
+      "get": {
+        "tags": [
+          "Expenses"
+        ],
+        "summary": "Get one expense",
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "pattern": "^[a-fA-F0-9]{24}$"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Expense returned",
+            "schema": {
+              "$ref": "#/definitions/Expense"
+            }
+          },
+          "400": {
+            "description": "Invalid ID, invalid request body, or invalid split",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "401": {
+            "description": "Sign in is required",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "403": {
+            "description": "Not a member of this trip",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "Trip or expense not found",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "500": {
+            "description": "An unexpected server or database error occurred",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Expenses"
+        ],
+        "summary": "Replace an expense",
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "pattern": "^[a-fA-F0-9]{24}$"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/ExpenseInput"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Expense updated",
+            "schema": {
+              "$ref": "#/definitions/Expense"
+            }
+          },
+          "400": {
+            "description": "Invalid ID, invalid request body, or invalid split",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "401": {
+            "description": "Sign in is required",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "403": {
+            "description": "Not a member of this trip",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "Trip or expense not found",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "500": {
+            "description": "An unexpected server or database error occurred",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Expenses"
+        ],
+        "summary": "Delete an expense",
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "pattern": "^[a-fA-F0-9]{24}$"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Expense deleted",
+            "schema": {
+              "$ref": "#/definitions/Message"
+            }
+          },
+          "400": {
+            "description": "Invalid ID, invalid request body, or invalid split",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "401": {
+            "description": "Sign in is required",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "403": {
+            "description": "Not a member of this trip",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "Trip or expense not found",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "500": {
+            "description": "An unexpected server or database error occurred",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
     }
   },
   "definitions": {
+    "ExpenseInput": {
+      "type": "object",
+      "required": [
+        "description",
+        "amountCents",
+        "paidBy",
+        "splitType",
+        "category",
+        "date"
+      ],
+      "properties": {
+        "description": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 100,
+          "example": "Cabin rental"
+        },
+        "amountCents": {
+          "type": "integer",
+          "minimum": 1,
+          "example": 45000
+        },
+        "paidBy": {
+          "type": "string",
+          "pattern": "^[a-fA-F0-9]{24}$",
+          "description": "Trip member who paid"
+        },
+        "splitType": {
+          "type": "string",
+          "enum": [
+            "equal",
+            "percentage",
+            "custom"
+          ]
+        },
+        "splits": {
+          "type": "array",
+          "description": "Required for percentage (userId and percent, totaling 100) and custom (userId and amountCents, totaling amountCents) splits. Ignored for equal",
+          "items": {
+            "type": "object",
+            "required": [
+              "userId"
+            ],
+            "properties": {
+              "userId": {
+                "type": "string",
+                "pattern": "^[a-fA-F0-9]{24}$"
+              },
+              "percent": {
+                "type": "number",
+                "exclusiveMinimum": 0,
+                "maximum": 100
+              },
+              "amountCents": {
+                "type": "integer",
+                "minimum": 0
+              }
+            }
+          }
+        },
+        "category": {
+          "type": "string",
+          "enum": [
+            "lodging",
+            "food",
+            "transport",
+            "activity",
+            "other"
+          ]
+        },
+        "date": {
+          "type": "string",
+          "format": "date"
+        }
+      },
+      "example": {
+        "description": "Cabin rental",
+        "amountCents": 45000,
+        "paidBy": "67a123456789abcdef000002",
+        "splitType": "equal",
+        "category": "lodging",
+        "date": "2026-07-01"
+      }
+    },
+    "Expense": {
+      "type": "object",
+      "required": [
+        "_id",
+        "tripId",
+        "description",
+        "amountCents",
+        "paidBy",
+        "splitType",
+        "splits",
+        "category",
+        "date"
+      ],
+      "properties": {
+        "_id": {
+          "type": "string",
+          "pattern": "^[a-fA-F0-9]{24}$"
+        },
+        "tripId": {
+          "type": "string",
+          "pattern": "^[a-fA-F0-9]{24}$"
+        },
+        "description": {
+          "type": "string"
+        },
+        "amountCents": {
+          "type": "integer"
+        },
+        "paidBy": {
+          "type": "string",
+          "pattern": "^[a-fA-F0-9]{24}$"
+        },
+        "splitType": {
+          "type": "string",
+          "enum": [
+            "equal",
+            "percentage",
+            "custom"
+          ]
+        },
+        "splits": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          }
+        },
+        "category": {
+          "type": "string"
+        },
+        "date": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "Settlement": {
+      "type": "object",
+      "required": [
+        "balances",
+        "payments"
+      ],
+      "properties": {
+        "balances": {
+          "type": "object",
+          "description": "Net cents per user ID. Positive is owed money, negative owes money",
+          "additionalProperties": {
+            "type": "integer"
+          }
+        },
+        "payments": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "from": {
+                "type": "string",
+                "pattern": "^[a-fA-F0-9]{24}$"
+              },
+              "to": {
+                "type": "string",
+                "pattern": "^[a-fA-F0-9]{24}$"
+              },
+              "amountCents": {
+                "type": "integer",
+                "minimum": 1
+              }
+            }
+          }
+        }
+      },
+      "example": {
+        "balances": {
+          "67a123456789abcdef000002": 1500,
+          "67a123456789abcdef000003": -1500
+        },
+        "payments": [
+          {
+            "from": "67a123456789abcdef000003",
+            "to": "67a123456789abcdef000002",
+            "amountCents": 1500
+          }
+        ]
+      }
+    },
     "ActivityInput": {
       "type": "object",
       "required": [

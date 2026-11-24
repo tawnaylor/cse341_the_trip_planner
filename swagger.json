@@ -114,6 +114,124 @@
           }
         }
       }
+    },
+    "/trips/{tripId}/expenses": {
+      "get": {
+        "tags": ["Expenses"],
+        "summary": "List a trip's expenses, newest first",
+        "parameters": [
+          { "name": "tripId", "in": "path", "required": true, "type": "string", "pattern": "^[a-fA-F0-9]{24}$" }
+        ],
+        "responses": {
+          "200": { "description": "Expenses returned." },
+          "400": { "description": "Invalid trip ID." },
+          "401": { "description": "Sign-in is required." },
+          "403": { "description": "Not a member of this trip." },
+          "404": { "description": "Trip not found." },
+          "500": { "description": "An unexpected server error occurred." }
+        }
+      },
+      "post": {
+        "tags": ["Expenses"],
+        "summary": "Log an expense",
+        "description": "Amounts are integer cents. Percentage splits need userId and percent (totaling 100). Custom splits need userId and amountCents (totaling amountCents). Equal splits ignore splits.",
+        "parameters": [
+          { "name": "tripId", "in": "path", "required": true, "type": "string", "pattern": "^[a-fA-F0-9]{24}$" },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "required": ["description", "amountCents", "paidBy", "splitType", "category", "date"],
+              "properties": {
+                "description": { "type": "string", "example": "Cabin rental" },
+                "amountCents": { "type": "integer", "example": 45000 },
+                "paidBy": { "type": "string", "example": "67a123456789abcdef000002" },
+                "splitType": { "type": "string", "enum": ["equal", "percentage", "custom"] },
+                "splits": { "type": "array", "items": { "type": "object" } },
+                "category": { "type": "string", "enum": ["lodging", "food", "transport", "activity", "other"] },
+                "date": { "type": "string", "format": "date" }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "201": { "description": "Expense created." },
+          "400": { "description": "Validation error, payer or split user not a trip member, or invalid split math." },
+          "401": { "description": "Sign-in is required." },
+          "403": { "description": "Not a member of this trip." },
+          "404": { "description": "Trip not found." },
+          "500": { "description": "An unexpected server error occurred." }
+        }
+      }
+    },
+    "/trips/{tripId}/settlement": {
+      "get": {
+        "tags": ["Expenses"],
+        "summary": "Balances and who pays whom",
+        "description": "Positive balances are owed money, negative balances owe money. All amounts are in cents.",
+        "parameters": [
+          { "name": "tripId", "in": "path", "required": true, "type": "string", "pattern": "^[a-fA-F0-9]{24}$" }
+        ],
+        "responses": {
+          "200": { "description": "Balances and payments." },
+          "400": { "description": "Invalid trip ID." },
+          "401": { "description": "Sign-in is required." },
+          "403": { "description": "Not a member of this trip." },
+          "404": { "description": "Trip not found." },
+          "500": { "description": "An unexpected server error occurred." }
+        }
+      }
+    },
+    "/expenses/{id}": {
+      "get": {
+        "tags": ["Expenses"],
+        "summary": "Get one expense",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "type": "string", "pattern": "^[a-fA-F0-9]{24}$" }
+        ],
+        "responses": {
+          "200": { "description": "Expense returned." },
+          "400": { "description": "Invalid expense ID." },
+          "401": { "description": "Sign-in is required." },
+          "403": { "description": "Not a member of this trip." },
+          "404": { "description": "Expense not found." },
+          "500": { "description": "An unexpected server error occurred." }
+        }
+      },
+      "put": {
+        "tags": ["Expenses"],
+        "summary": "Replace an expense",
+        "description": "Same body as logging an expense. The expense stays in its trip.",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "type": "string", "pattern": "^[a-fA-F0-9]{24}$" },
+          { "name": "body", "in": "body", "required": true, "schema": { "type": "object" } }
+        ],
+        "responses": {
+          "200": { "description": "Expense updated." },
+          "400": { "description": "Validation error or invalid split math." },
+          "401": { "description": "Sign-in is required." },
+          "403": { "description": "Not a member of this trip." },
+          "404": { "description": "Expense not found." },
+          "500": { "description": "An unexpected server error occurred." }
+        }
+      },
+      "delete": {
+        "tags": ["Expenses"],
+        "summary": "Delete an expense",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "type": "string", "pattern": "^[a-fA-F0-9]{24}$" }
+        ],
+        "responses": {
+          "200": { "description": "Expense deleted." },
+          "400": { "description": "Invalid expense ID." },
+          "401": { "description": "Sign-in is required." },
+          "403": { "description": "Not a member of this trip." },
+          "404": { "description": "Expense not found." },
+          "500": { "description": "An unexpected server error occurred." }
+        }
+      }
     }
   },
   "definitions": {}
