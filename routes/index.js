@@ -15,6 +15,6 @@ router.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 router.use('/users', require('./users'));
 router.use('/', require('./activities'));
 router.use('/trips', require('./trips'));
-router.use('/expenses', require('./expenses'));
+router.use('/', require('./expenses'));
 
 module.exports = router;
