@@ -13,13 +13,15 @@ const id = {
 const activityFields = {
   title: {
     type: 'string',
-    minLength: 1,
+    minLength: 3,
+    maxLength: 100,
     pattern: '\\S',
-    description: 'Required. Must contain non-whitespace text'
+    description: 'Required. Trimmed; must contain 3-100 characters and non-whitespace text'
   },
   description: {
     type: 'string',
-    description: 'Optional activity details'
+    maxLength: 500,
+    description: 'Optional activity details; trimmed, at most 500 characters'
   },
   date: {
     type: 'string',

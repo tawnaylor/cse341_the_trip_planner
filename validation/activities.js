@@ -2,8 +2,6 @@
 // Activities validation rules (express-validator). Return 400 when rules fail.
 // const { body, param, validationResult } = require('express-validator');
 
-// TODO (Jacquelyn Kulmus): add validation rules
-
 const { body, param, validationResult } = require('express-validator');
 
 const tripIdRules = [
@@ -31,9 +29,11 @@ const activityBodyRules = [
     return true;
   }),
   body('title').isString().withMessage('Title must be text').bail()
-    .trim().notEmpty().withMessage('Title is required'),
+    .trim().notEmpty().withMessage('Title is required').bail()
+    .isLength({ min: 3, max: 100 }).withMessage('Title must be 3-100 characters'),
   body('description').optional().isString()
-    .withMessage('Description must be text.').bail().trim(),
+    .withMessage('Description must be text.').bail().trim()
+    .isLength({ max: 500 }).withMessage('Description must be at most 500 characters'),
   body('date').optional().isString()
     .withMessage('Date must be text in YYYY-MM-DD format').bail()
     .matches(/^\d{4}-\d{2}-\d{2}$/).withMessage('Use YYYY-MM-DD for the date').bail()
